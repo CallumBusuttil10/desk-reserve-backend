@@ -1,0 +1,10 @@
+# Python environment
+venv/
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# Database (if using local sqlite for testing before connecting to postgres)
+db.sqlite3
