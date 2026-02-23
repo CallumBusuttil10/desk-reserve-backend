@@ -23,8 +23,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # This will evaluate to True locally, but False in production when we change the .env
 DEBUG = os.environ.get('DEBUG') == 'True'
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
