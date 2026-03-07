@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# 1. User Profile Model (Extends the built-in Django User)
 class UserProfile(models.Model):
     ROLE_CHOICES = [
         ('Employee', 'Employee'),
@@ -15,7 +14,6 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.role}"
 
-# 2. Workspace Model (The resources being booked)
 class Workspace(models.Model):
     RESOURCE_TYPES = [
         ('Desk', 'Desk'),
@@ -32,7 +30,6 @@ class Workspace(models.Model):
     def __str__(self):
         return f"{self.name} ({self.resource_type})"
 
-# 3. Booking Model (The core domain functionality)
 class Booking(models.Model):
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
