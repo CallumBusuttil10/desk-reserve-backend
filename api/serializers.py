@@ -4,7 +4,8 @@ from .models import Workspace, Booking, UserProfile
 class WorkspaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Workspace
-        fields = ['id', 'name', 'resource_type', 'capacity', 'is_active', 'image_url']
+        # ADD 'floor' TO THIS LIST
+        fields = ['id', 'name', 'resource_type', 'floor', 'capacity', 'is_active', 'image']
 
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,9 +21,11 @@ class BookingSerializer(serializers.ModelSerializer):
         start_time = data.get('start_time')
         end_time = data.get('end_time')
 
+        # Basic time logic check
         if start_time >= end_time:
             raise serializers.ValidationError("End time must be after start time.")
 
+        # Logic to prevent two people from booking the same desk at the same time
         overlapping_bookings = Booking.objects.filter(
             workspace=workspace,
             booking_date=booking_date,
