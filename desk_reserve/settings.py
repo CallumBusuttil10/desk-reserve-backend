@@ -1,17 +1,15 @@
 from pathlib import Path
-import os
 import dj_database_url
 from datetime import timedelta
 from dotenv import load_dotenv
+import os
+import certifi
 
-# 1. Define BASE_DIR first
+os.environ['SSL_CERT_FILE'] = certifi.where()
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# 2. Load Environment Variables immediately
 load_dotenv(os.path.join(BASE_DIR, ".env"))
-
-# 3. Quick Debug: Un-comment the line below if it still fails to see if the URL is loading
-# print(f"DEBUG CLOUDINARY URL: {os.environ.get('CLOUDINARY_URL')}")
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = os.environ.get('DEBUG') == 'True'
@@ -112,9 +110,7 @@ CORS_ALLOWED_ORIGINS = [
 # --- CLOUDINARY CONFIGURATION ---
 import cloudinary
 
-# We set this BEFORE the STORAGES dictionary
 CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
-
 cloudinary.config(
     cloudinary_url=CLOUDINARY_URL
 )
@@ -128,5 +124,16 @@ STORAGES = {
     },
 }
 
-# Fallback for older versions or library specific requirements
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# --- SENDGRID EMAIL SETTINGS ---
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = 'apikey'
+
+EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY')
+
+DEFAULT_FROM_EMAIL = 'callumdavidbusuttil@gmail.com'
