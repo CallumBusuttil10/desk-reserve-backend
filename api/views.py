@@ -65,34 +65,32 @@ def create_booking(request):
             user_email = request.user.email
             workspace_name = booking.workspace.name
             date = booking.booking_date
+
             subject = f"Booking Confirmed: {workspace_name}"
-            plain_message = f"Hello {request.user.username},\n\nSuccess! Your booking for {workspace_name} on {date} from {booking.start_time} to {booking.end_time} is confirmed.\n\nThe DeskReserve Team"
+            plain_message = f"Hello {request.user.username}, your booking is confirmed."
 
             html_message = f"""
-            <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                <div style="background-color: #1976d2; padding: 20px; text-align: center; color: white;">
-                    <h2 style="margin: 0; letter-spacing: 1px;">DESKRESERVE</h2>
-                </div>
-                <div style="padding: 30px; background-color: #ffffff;">
-                    <p style="font-size: 16px;">Hello <strong>{request.user.username}</strong>,</p>
-                    <p style="font-size: 16px; color: #555;">Your workspace has been successfully reserved. Here are the details of your booking:</p>
-                    <div style="background-color: #f8fafc; padding: 20px; border-radius: 6px; margin: 25px 0; border-left: 4px solid #1976d2;">
-                        <p style="margin: 5px 0; font-size: 15px;"><strong>Workspace:</strong> {workspace_name}</p>
-                        <p style="margin: 5px 0; font-size: 15px;"><strong>Date:</strong> {date}</p>
-                        <p style="margin: 5px 0; font-size: 15px;"><strong>Time:</strong> {booking.start_time} - {booking.end_time}</p>
-                    </div>
-                    <p style="font-size: 14px; color: #777;">If you need to adjust or cancel this reservation, you can do so directly from the <strong>My Bookings</strong> page on your dashboard.</p>
-                    <br>
-                    <p style="font-size: 16px; margin-bottom: 0;">See you soon,</p>
-                    <p style="font-size: 16px; font-weight: bold; color: #1976d2; margin-top: 5px;">The DeskReserve Team</p>
-                </div>
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+                <h2 style="color: #1976d2;">Booking Confirmed!</h2>
+                <p><strong>Workspace:</strong> {workspace_name}</p>
+                <p><strong>Date:</strong> {date}</p>
+                <p><strong>Time:</strong> {booking.start_time} - {booking.end_time}</p>
             </div>
             """
-            send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, [user_email], fail_silently=False, html_message=html_message)
+
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user_email],
+                fail_silently=True,
+                html_message=html_message
+            )
         except Exception as e:
-            print(f"SendGrid Error: {e}")
+            print(f"Booking Email failed: {e}")
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
