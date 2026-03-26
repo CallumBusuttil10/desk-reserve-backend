@@ -1,9 +1,9 @@
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Workspace, Booking
-from .serializers import WorkspaceSerializer, BookingSerializer
+from .serializers import WorkspaceSerializer, BookingSerializer, RegisterSerializer
 from django.core.mail import send_mail
 from django.conf import settings
 
@@ -13,6 +13,52 @@ def get_workspaces(request):
     workspaces = Workspace.objects.filter(is_active=True)
     serializer = WorkspaceSerializer(workspaces, many=True)
     return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_user(request):
+    """Register a new user and send a Welcome email."""
+    serializer = RegisterSerializer(data=request.data)
+
+    if serializer.is_valid():
+        user = serializer.save()
+
+        # Send the Welcome Email via SendGrid
+        try:
+            subject = "Welcome to DeskReserve!"
+            plain_message = f"Hi {user.username},\n\nWelcome to DeskReserve! Your account is ready to go."
+
+            # A slick, professional HTML welcome template
+            html_message = f"""
+            <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div style="background-color: #1976d2; padding: 20px; text-align: center; color: white;">
+                    <h2 style="margin: 0; letter-spacing: 1px;">Welcome to DeskReserve!</h2>
+                </div>
+                <div style="padding: 30px; background-color: #ffffff; text-align: center;">
+                    <p style="font-size: 18px;">Hello <strong>{user.username}</strong>,</p>
+                    <p style="font-size: 16px; color: #555;">Your account has been successfully created. You can now log in and start booking workspaces instantly.</p>
+                    <br>
+                    <p style="font-size: 16px; margin-bottom: 0;">We're excited to have you,</p>
+                    <p style="font-size: 16px; font-weight: bold; color: #1976d2; margin-top: 5px;">The DeskReserve Team</p>
+                </div>
+            </div>
+            """
+
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+                html_message=html_message
+            )
+        except Exception as e:
+            print(f"SendGrid Error (Welcome Email): {e}")
+
+        return Response({"message": "User created successfully."}, status=status.HTTP_201_CREATED)
+
+    # If the username is taken or email is invalid, return the exact errors
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

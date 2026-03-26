@@ -2,6 +2,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # User routes
+    path('register/', views.register_user, name='register'),
+
     # General workspace list
     path('workspaces/', views.get_workspaces, name='workspaces'),
 
