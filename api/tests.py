@@ -2,12 +2,13 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth.models import User
+from django.core import mail
 from .models import Workspace, Booking
 
 class DeskReserveAPITests(APITestCase):
     def setUp(self):
-        self.user1 = User.objects.create_user(username="testuser1", password="password123")
-        self.user2 = User.objects.create_user(username="testuser2", password="password123")
+        self.user1 = User.objects.create_user(username="testuser1", email="user1@test.com", password="password123")
+        self.user2 = User.objects.create_user(username="testuser2", email="user2@test.com", password="password123")
 
         self.workspace = Workspace.objects.create(
             name="Test Desk",
@@ -21,10 +22,12 @@ class DeskReserveAPITests(APITestCase):
         self.workspaces_url = reverse('workspaces')
         self.user_bookings_url = reverse('get_user_bookings')
 
+        self.register_url = reverse('register')
+        self.password_reset_url = reverse('request_password_reset')
 
     def test_prevent_double_booking(self):
         """Ensure the server prevents overlapping bookings on the same resource."""
-        self.client.force_authenticate(user=self.user1) # Auth required now
+        self.client.force_authenticate(user=self.user1)
 
         valid_data = {
             "user": self.user1.id,
@@ -65,7 +68,6 @@ class DeskReserveAPITests(APITestCase):
 
     def test_get_active_workspaces(self):
         """Ensure the GET endpoint successfully fetches active workspaces."""
-        # Note: Anyone can fetch workspaces (no auth required)
         response = self.client.get(self.workspaces_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
@@ -138,3 +140,48 @@ class DeskReserveAPITests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(Booking.objects.count(), 1)
+
+    # ==========================================
+    # AUTHENTICATION & EMAIL TESTS
+    # ==========================================
+
+    def test_user_registration_success(self):
+        """Ensure a user can register and receives a welcome email."""
+        payload = {
+            "username": "newuser",
+            "email": "newuser@test.com",
+            "password": "securepassword123"
+        }
+        response = self.client.post(self.register_url, payload, format='json')
+
+        # Check database creation
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(User.objects.filter(username="newuser").exists())
+
+        # Verify the Welcome email was generated
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, 'Welcome to DeskReserve!')
+
+    def test_user_registration_missing_email(self):
+        """Ensure registration fails if the required email field is missing."""
+        payload = {
+            "username": "noemailuser",
+            "password": "securepassword123"
+            # Missing email!
+        }
+        response = self.client.post(self.register_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+
+    def test_password_reset_email_generation(self):
+        """Ensure requesting a password reset generates an email with a token."""
+        payload = {
+            "email": "user1@test.com"
+        }
+        response = self.client.post(self.password_reset_url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify the Reset email was generated
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, 'Password Reset Request - DeskReserve')
