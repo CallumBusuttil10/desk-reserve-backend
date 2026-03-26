@@ -77,7 +77,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -107,7 +106,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://desk-reserve-ui.onrender.com",
 ]
 
-# --- CLOUDINARY CONFIGURATION ---
+# CLOUDINARY CONFIGURATION
 import cloudinary
 
 CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
@@ -126,7 +125,7 @@ STORAGES = {
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-# --- SENDGRID EMAIL SETTINGS ---
+# SENDGRID EMAIL SETTINGS
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.sendgrid.net'
 EMAIL_PORT = 587
@@ -136,4 +135,4 @@ EMAIL_HOST_USER = 'apikey'
 
 EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY')
 
-DEFAULT_FROM_EMAIL = 'callumdavidbusuttil@gmail.com'
+DEFAULT_FROM_EMAIL = 'callum.busuttil@outlook.com'
