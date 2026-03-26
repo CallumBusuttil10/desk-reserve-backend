@@ -6,6 +6,10 @@ from .models import Workspace, Booking
 from .serializers import WorkspaceSerializer, BookingSerializer, RegisterSerializer
 from django.core.mail import send_mail
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 
 @api_view(['GET'])
 def get_workspaces(request):
@@ -23,12 +27,10 @@ def register_user(request):
     if serializer.is_valid():
         user = serializer.save()
 
-        # Send the Welcome Email via SendGrid
         try:
             subject = "Welcome to DeskReserve!"
             plain_message = f"Hi {user.username},\n\nWelcome to DeskReserve! Your account is ready to go."
 
-            # A slick, professional HTML welcome template
             html_message = f"""
             <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
                 <div style="background-color: #1976d2; padding: 20px; text-align: center; color: white;">
@@ -57,7 +59,6 @@ def register_user(request):
 
         return Response({"message": "User created successfully."}, status=status.HTTP_201_CREATED)
 
-    # If the username is taken or email is invalid, return the exact errors
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
@@ -76,7 +77,6 @@ def create_booking(request):
 
             subject = f"Booking Confirmed: {workspace_name}"
 
-            # 1. Keep the plain text fallback for older email clients/smartwatches
             plain_message = (
                 f"Hello {request.user.username},\n\n"
                 f"Success! Your booking for {workspace_name} on {date} from "
@@ -84,7 +84,6 @@ def create_booking(request):
                 f"The DeskReserve Team"
             )
 
-            # 2. Add the slick HTML version
             html_message = f"""
             <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
                 <div style="background-color: #1976d2; padding: 20px; text-align: center; color: white;">
@@ -108,14 +107,13 @@ def create_booking(request):
             </div>
             """
 
-            # 3. Pass BOTH to send_mail
             send_mail(
                 subject=subject,
-                message=plain_message,          # Fallback
+                message=plain_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user_email],
                 fail_silently=False,
-                html_message=html_message       # The fancy HTML version
+                html_message=html_message
             )
         except Exception as e:
             print(f"SendGrid Error: {e}")
@@ -128,7 +126,6 @@ def create_booking(request):
 @permission_classes([IsAuthenticated])
 def get_user_bookings(request):
     """Fetch all bookings for the currently authenticated user based on their token."""
-    # request.user is automatically populated by the JWT token
     bookings = Booking.objects.filter(user=request.user).order_by('booking_date', 'start_time')
     serializer = BookingSerializer(bookings, many=True)
     return Response(serializer.data)
@@ -138,10 +135,67 @@ def get_user_bookings(request):
 def delete_booking(request, pk):
     """Delete an existing booking."""
     try:
-        # We also ensure the user can only delete THEIR OWN bookings
         booking = Booking.objects.get(id=pk, user=request.user)
     except Booking.DoesNotExist:
         return Response({"error": "Booking not found or not yours."}, status=status.HTTP_404_NOT_FOUND)
 
     booking.delete()
     return Response({"message": "Booking deleted successfully"}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def request_password_reset(request):
+    """Generates a token and sends a password reset link via email."""
+    email = request.data.get('email')
+
+    if not email:
+        return Response({"error": "Please provide an email address."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(email=email)
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        reset_link = f"http://localhost:5173/reset-password/{uid}/{token}/"
+
+        subject = "Password Reset Request - DeskReserve"
+        plain_message = f"Click here to reset your password: {reset_link}"
+        html_message = f"""
+        <div style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+            <h2 style="color: #1976d2;">Password Reset</h2>
+            <p>You requested a password reset for your DeskReserve account.</p>
+            <p>Click the button below to choose a new password. This link is only valid for a short time.</p>
+            <a href="{reset_link}" style="display: inline-block; padding: 10px 20px; margin-top: 20px; background-color: #1976d2; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a>
+            <p style="margin-top: 30px; font-size: 12px; color: #777;">If you did not request this, please ignore this email.</p>
+        </div>
+        """
+
+        send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False, html_message=html_message)
+
+    except User.DoesNotExist:
+        pass
+
+    return Response({"message": "If an account with that email exists, a reset link has been sent."}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def confirm_password_reset(request):
+    """Verifies the token and updates the user's password."""
+    uidb64 = request.data.get('uidb64')
+    token = request.data.get('token')
+    new_password = request.data.get('new_password')
+
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        user.set_password(new_password)
+        user.save()
+        return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
+    else:
+        return Response({"error": "This reset link is invalid or has expired."}, status=status.HTTP_400_BAD_REQUEST)
