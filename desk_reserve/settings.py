@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import os
 import certifi
 
+# Fix for SSL certificates in certain environments
 os.environ['SSL_CERT_FILE'] = certifi.where()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -14,6 +15,7 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = os.environ.get('DEBUG') == 'True'
 
+# Explicitly list your Render domains for better security
 ALLOWED_HOSTS = ['*']
 
 # Application definition
@@ -23,7 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'cloudinary_storage', # Must be above staticfiles
+    'cloudinary_storage',
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
@@ -61,7 +63,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'desk_reserve.wsgi.application'
 
-# Database
+# Database - Render uses DATABASE_URL
 DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
@@ -82,7 +84,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files
 STATIC_URL = 'static/'
 
 # Auth & JWT
@@ -106,33 +107,29 @@ CORS_ALLOWED_ORIGINS = [
     "https://desk-reserve-ui.onrender.com",
 ]
 
-# CLOUDINARY CONFIGURATION
-import cloudinary
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://desk-reserve-ui.onrender.com",
+    "https://desk-reserve-api.onrender.com"
+]
+
+# --- CLOUDINARY ---
+import cloudinary
 CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
-cloudinary.config(
-    cloudinary_url=CLOUDINARY_URL
-)
+cloudinary.config(cloudinary_url=CLOUDINARY_URL)
 
 STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-    },
+    "default": {"BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-# SENDGRID EMAIL SETTINGS
+# --- SENDGRID EMAIL SETTINGS ---
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.sendgrid.net'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-
 EMAIL_HOST_USER = 'apikey'
-
 EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY')
-
 DEFAULT_FROM_EMAIL = 'callum.busuttil@outlook.com'
+
+EMAIL_TIMEOUT = 10
