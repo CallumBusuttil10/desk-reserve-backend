@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.auth.models import User
 from .models import Workspace, Booking, UserProfile
 
 class WorkspaceSerializer(serializers.ModelSerializer):
@@ -38,3 +39,22 @@ class BookingSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This workspace is already booked for this time slot.")
 
         return data
+
+class RegisterSerializer(serializers.ModelSerializer):
+    # Force the email field to be required
+    email = serializers.EmailField(required=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password')
+        # Ensure the password isn't returned in the API response
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        # We must use create_user() so Django securely hashes the password!
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password']
+        )
+        return user
