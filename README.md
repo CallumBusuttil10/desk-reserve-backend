@@ -6,7 +6,7 @@ Built with **Django** and **Django REST Framework (DRF)**.
 
 ---
 
-## 🚀 Features & Architecture
+## Features & Architecture
 
 * **Secure Authentication:** Utilizes **JWT (JSON Web Tokens)** via `SimpleJWT` for stateless, secure session management.
 * **Data Isolation:** Enforces strict user permissions so clients can only fetch, view, and delete their own personal bookings.
@@ -16,7 +16,7 @@ Built with **Django** and **Django REST Framework (DRF)**.
 
 ---
 
-## 📍 API Endpoints
+## API Endpoints
 
 | Method | Endpoint | Auth Required | Description |
 | :--- | :--- | :---: | :--- |
@@ -27,7 +27,7 @@ Built with **Django** and **Django REST Framework (DRF)**.
 
 ---
 
-## 🛠️ Local Development Setup
+##  Local Development Setup
 
 Before you start, ensure you do not have a VPN restricting access to local ports.
 
@@ -68,7 +68,7 @@ Navigate to `http://localhost:8000/admin` in your browser to manage Users, Works
 
 ---
 
-## 🧪 Running Tests
+## Running Tests
 
 The application features a robust test suite verifying permissions, authentication, and booking conflict logic. Run the tests using:
 
@@ -78,7 +78,7 @@ python manage.py test api
 
 ---
 
-## 📎 Appendix: Third-Party Integrations
+## Appendix: Third-Party Integrations
 
 As part of the application's development, two external services were integrated to handle static asset delivery and transactional communications, ensuring a more scalable and professional architecture.
 
@@ -99,3 +99,14 @@ As part of the application's development, two external services were integrated 
 * The HTML template utilizes inline CSS to match the application's frontend design system, including brand colors (e.g., `#1976d2`) and layout structures.
 * **Error Handling & Security:** Wrapped the SMTP dispatch in a `try/except` block. This ensures that if the third-party email server times out or fails, the core booking transaction still succeeds without crashing the user's frontend experience.
 * **Development Challenges Overcome:** Successfully resolved local environment SSL/TLS certificate verification failures (common in macOS Python environments) by integrating the `certifi` package to securely validate the connection to SendGrid's SMTP servers.
+
+## Appendix: Generative AI Acknowledgement (Yellow Category)
+
+In accordance with the module's "Yellow" category classification for Generative AI usage, AI tools (specifically Google Gemini) were utilized to support planning, debugging, and the refinement of technical features during the development of this enterprise application.
+
+**Critical Evaluation of AI Usage:**
+* **Debugging & Environment Configuration:** Gemini was used to diagnose and resolve a macOS-specific SSL/TLS certificate verification failure (`[SSL: CERTIFICATE_VERIFY_FAILED]`) during the SendGrid SMTP integration. It suggested implementing the `certifi` package to securely validate the connection to SendGrid's servers.
+* **Component Generation & Styling:** AI was leveraged to generate boilerplate React functional components (using Material UI) for the Registration and Password Reset flows. The generated code was then manually reviewed, tested, and integrated into the existing routing architecture to ensure it matched the application's unified design system.
+* **Content Generation:** AI assisted in drafting the responsive inline-CSS HTML templates used for the transactional emails (Welcome and Booking Confirmations) sent via SendGrid.
+
+All AI-assisted code was thoroughly tested, verified for accuracy, and fully understood before being integrated into the final deployment.
