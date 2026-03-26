@@ -18,12 +18,12 @@ Built with **Django** and **Django REST Framework (DRF)**.
 
 ## API Endpoints
 
-| Method | Endpoint | Auth Required | Description |
-| :--- | :--- | :---: | :--- |
-| `GET` | `/api/workspaces/` | ❌ | Fetches all active workspaces (Desks, Focus Pods, Boardrooms). |
-| `GET` | `/api/bookings/` | ✅ | Fetches all active bookings belonging to the authenticated user. |
-| `POST` | `/api/bookings/create/` | ✅ | Creates a new booking and triggers a confirmation email. |
-| `DELETE`| `/api/bookings/<id>/delete/` | ✅ | Cancels/deletes a booking (only if owned by the requesting user). |
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/workspaces/` | Fetches all active workspaces (Desks, Focus Pods, Boardrooms). |
+| `GET` | `/api/bookings/` | Fetches all active bookings belonging to the authenticated user. |
+| `POST` | `/api/bookings/create/` | Creates a new booking and triggers a confirmation email. |
+| `DELETE`| `/api/bookings/<id>/delete/` | Cancels/deletes a booking (only if owned by the requesting user). |
 
 ---
 
