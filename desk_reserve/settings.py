@@ -31,7 +31,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'cloudinary',
     'api',
-    'django.anymail'
+    'anymail'
 ]
 
 MIDDLEWARE = [
