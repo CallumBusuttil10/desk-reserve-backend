@@ -45,11 +45,19 @@ def register_user(request):
                 </div>
             </div>
             """
-            send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False, html_message=html_message)
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=True,
+                html_message=html_message
+            )
         except Exception as e:
             print(f"SendGrid Error (Welcome Email): {e}")
 
         return Response({"message": "User created successfully."}, status=status.HTTP_201_CREATED)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
@@ -143,7 +151,17 @@ def request_password_reset(request):
         </div>
         """
 
-        send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False, html_message=html_message)
+        try:
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=True,
+                html_message=html_message
+            )
+        except Exception as e:
+            print(f"Password Reset Email failed: {e}")
 
     except User.DoesNotExist:
         pass
