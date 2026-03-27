@@ -1,6 +1,4 @@
 import os
-import threading
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -62,29 +60,16 @@ def register_user(request):
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def send_email_background(subject, plain_message, from_email, recipient_list, html_message):
-        """Helper function to send emails asynchronously"""
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_booking(request):
+    """Create a new booking and send an HTML confirmation email."""
+    serializer = BookingSerializer(data=request.data)
+
+    if serializer.is_valid():
+        booking = serializer.save()
+
         try:
-            send_mail(
-                subject=subject,
-                message=plain_message,
-                from_email=from_email,
-                recipient_list=recipient_list,
-                fail_silently=True,
-                html_message=html_message
-            )
-        except Exception as e:
-            print(f"Background Email Error: {e}")
-
-    @api_view(['POST'])
-    @permission_classes([IsAuthenticated])
-    def create_booking(request):
-        """Create a new booking and send an HTML confirmation email."""
-        serializer = BookingSerializer(data=request.data)
-
-        if serializer.is_valid():
-            booking = serializer.save()
-
             user_email = request.user.email
             workspace_name = booking.workspace.name
             date = booking.booking_date
@@ -101,15 +86,20 @@ def register_user(request):
             </div>
             """
 
-            email_thread = threading.Thread(
-                target=send_email_background,
-                args=(subject, plain_message, settings.DEFAULT_FROM_EMAIL, [user_email], html_message)
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user_email],
+                fail_silently=True,
+                html_message=html_message
             )
-            email_thread.start()
+        except Exception as e:
+            print(f"SMTP Connection Failed: {e}")
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
