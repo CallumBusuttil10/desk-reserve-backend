@@ -130,13 +130,15 @@ def request_password_reset(request):
     if not email:
         return Response({"error": "Please provide an email address."}, status=status.HTTP_400_BAD_REQUEST)
 
-    try:
-        user = User.objects.get(email=email)
+    # Use filter().first() to avoid MultipleObjectsReturned crash
+    user = User.objects.filter(email=email).first()
 
+    if user:
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
 
-        frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:5173').rstrip('/')
+        # Uses the Render URL in production, or localhost if testing locally
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://desk-reserve-ui.onrender.com').rstrip('/')
         reset_link = f"{frontend_url}/reset-password/{uid}/{token}/"
 
         subject = "Password Reset Request - DeskReserve"
@@ -163,9 +165,7 @@ def request_password_reset(request):
         except Exception as e:
             print(f"Password Reset Email failed: {e}")
 
-    except User.DoesNotExist:
-        pass
-
+    # Always return 200 so hackers can't guess valid emails
     return Response({"message": "If an account with that email exists, a reset link has been sent."}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
