@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'cloudinary',
     'api',
+    'django.anymail'
 ]
 
 MIDDLEWARE = [
@@ -124,13 +125,12 @@ STORAGES = {
 }
 
 # --- SENDGRID EMAIL SETTINGS ---
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.sendgrid.net'
-EMAIL_PORT = 465               # Changed to 465
-EMAIL_USE_SSL = True           # Enabled Implicit SSL
-EMAIL_USE_TLS = False          # Disabled STARTTLS
-EMAIL_HOST_USER = 'apikey'
-EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY')
+EMAIL_BACKEND = "anymail.backends.sendgrid.EmailBackend"
+
+ANYMAIL = {
+    "SENDGRID_API_KEY": os.environ.get('SENDGRID_API_KEY'),
+}
+
 DEFAULT_FROM_EMAIL = 'callum.busuttil@outlook.com'
 
 EMAIL_TIMEOUT = 15
